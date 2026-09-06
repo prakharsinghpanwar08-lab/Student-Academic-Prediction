@@ -103,3 +103,11 @@ This is the easiest way to run AcadIQ on a Windows laptop for demonstration.
 ```bash
 git clone https://github.com/prakharsinghpanwar08-lab/Student-Academic-Prediction.git
 cd Student-Academic-Prediction
+#### 2. Start the Backend
+
+Open Terminal 1 in VS Code:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --reload --port 8000
