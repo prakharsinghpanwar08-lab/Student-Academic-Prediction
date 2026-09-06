@@ -89,45 +89,17 @@ An enterprise-grade, multi-agent academic analytics and advisory platform featur
 
 ## Quickstart & Local Execution
 
-### Option A: Docker Compose (Production Environment)
-1. Copy the environment template:
-   ```bash
-   cp .env.example .env
-   ```
-2. Build and run the containers:
-   ```bash
-   docker compose up --build
-   ```
-3. Access the services:
-   - Frontend Dashboard: [http://localhost:3000](http://localhost:3000)
-   - FastAPI Docs & OpenAPI: [http://localhost:8000/docs](http://localhost:8000/docs)
-   - Health Check: [http://localhost:8000/api/health](http://localhost:8000/api/health)
+### ⭐ Recommended: Local Execution (No Docker Required)
 
-### Option B: Local Developer Mode (Windows / macOS / Linux)
-1. **Backend**:
-   ```bash
-   # Install dependencies
-   pip install -r backend/requirements.txt
+This is the easiest way to run AcadIQ on a Windows laptop for demonstration.
 
-   # Seed database (creates tables & seeds 100 profiles)
-   python backend/seed.py
+**Prerequisites:**
+- Python 3.10 or newer
+- Node.js 18 or newer
+- Git
 
-   # Start FastAPI dev server
-   python -m uvicorn app.main:app --app-dir backend --reload --port 8000
-   ```
-2. **Frontend**:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-   Open [http://localhost:5173](http://localhost:5173) in your browser.
+#### 1. Clone the repository
 
----
-
-## Automated Test Suite
-
-Run unit and integration tests covering PII sanitization, GPA normalization, shift vectors, ML ensemble predictions, and API routes:
 ```bash
-python -m pytest backend/tests/test_backend.py -v
-```
+git clone https://github.com/prakharsinghpanwar08-lab/Student-Academic-Prediction.git
+cd Student-Academic-Prediction
