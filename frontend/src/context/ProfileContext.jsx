@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { apiUrl } from '../api';
 
 const ProfileContext = createContext(null);
 
@@ -165,7 +166,7 @@ export const ProfileProvider = ({ children }) => {
       gpa_scale: parseFloat(gpaScale)
     };
 
-    fetch("/api/predict", {
+    fetch(apiUrl("/api/predict"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -222,7 +223,7 @@ export const ProfileProvider = ({ children }) => {
         gpa_scale: parseFloat(gpaScale)
       };
 
-      const res = await fetch("/api/advisor", {
+      const res = await fetch(apiUrl("/api/advisor"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

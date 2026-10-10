@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { apiUrl } from '../api';
 import { 
   Send, 
   AlertTriangle, 
@@ -158,7 +159,7 @@ export const CustomPredictionForm = ({ mode = 'school', isReset = false }) => {
 
     try {
       // 1. Call /api/predict endpoint
-      const predictRes = await fetch('/api/predict', {
+      const predictRes = await fetch(apiUrl('/api/predict'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -174,7 +175,7 @@ export const CustomPredictionForm = ({ mode = 'school', isReset = false }) => {
 
       // 2. Concurrently or immediately call /api/advisor for rich recommendations
       try {
-        const advisorRes = await fetch('/api/advisor', {
+        const advisorRes = await fetch(apiUrl('/api/advisor'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

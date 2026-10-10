@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { apiUrl } from '../api';
 import { 
   Users, Search, Filter, AlertTriangle, AlertOctagon, ShieldCheck, 
   ChevronRight, X, Sparkles, BookOpen, Clock, Smartphone, TrendingUp 
@@ -33,7 +34,7 @@ export const EducatorGradebook = ({ resetKey = 0 }) => {
       if (filterProfile !== "all") params.append("profile_type", filterProfile);
       if (searchQuery.trim()) params.append("search", searchQuery.trim());
 
-      const res = await fetch(`/api/roster?${params.toString()}`);
+      const res = await fetch(apiUrl(`/api/roster?${params.toString()}`));
       if (!res.ok) throw new Error("Failed to fetch roster");
       const data = await res.json();
       setRoster(data);
@@ -97,7 +98,7 @@ export const EducatorGradebook = ({ resetKey = 0 }) => {
     try {
       let detail = null;
       if (!student.id.startsWith('upload-')) {
-        const detailResponse = await fetch(`/api/students/${student.id}`, { signal: controller.signal });
+        const detailResponse = await fetch(apiUrl(`/api/students/${student.id}`), { signal: controller.signal });
         if (!detailResponse.ok) throw new Error('Failed to fetch student details.');
         detail = await detailResponse.json();
         if (detailRequestRef.current !== controller) return;
@@ -137,13 +138,13 @@ export const EducatorGradebook = ({ resetKey = 0 }) => {
       };
 
       const [predictionResponse, advisoryResponse] = await Promise.all([
-        fetch('/api/predict', {
+        fetch(apiUrl('/api/predict'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
           signal: controller.signal
         }),
-        fetch('/api/advisor', {
+        fetch(apiUrl('/api/advisor'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
