@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'https://onrender.com';
+export const API_BASE_URL = 'https://student-academic-prediction-e2gq.onrender.com';
 export const API_V1_PREFIX = '/api/v1';
 
 export const apiUrl = (path) => {
