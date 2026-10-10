@@ -213,6 +213,13 @@ export const CustomPredictionForm = ({ mode = 'school', isReset = false }) => {
         <div className="absolute -right-20 -top-20 w-72 h-72 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-20 -bottom-20 w-72 h-72 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
+        <aside
+          role="note"
+          className="relative z-10 mb-5 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm leading-relaxed text-amber-100"
+        >
+          💡 Notice: This predictor evaluates metrics and calculates scores for a single subject at a time.
+        </aside>
+
         {/* Top Header & Presets Bar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-800 relative z-10">
           <div>
@@ -666,7 +673,7 @@ export const CustomPredictionForm = ({ mode = 'school', isReset = false }) => {
             
             <div className="glass-panel p-4 rounded-2xl border border-white/5 space-y-1">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                College GPA (10.0 Scale)
+                PROJECTED SUBJECT GRADE POINT (10-PT SCALE)
               </span>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold font-mono text-white">
@@ -674,12 +681,12 @@ export const CustomPredictionForm = ({ mode = 'school', isReset = false }) => {
                 </span>
                 <span className="text-xs text-slate-500">/ 10.0</span>
               </div>
-              <p className="text-[11px] text-slate-500">Linear higher-education standardization</p>
+              <p className="text-[11px] text-slate-500">Projected grade point for this subject on a 10-point scale</p>
             </div>
 
             <div className="glass-panel p-4 rounded-2xl border border-white/5 space-y-1">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                College GPA (4.0 Scale)
+                PROJECTED SUBJECT GRADE POINT (4-PT SCALE)
               </span>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold font-mono text-white">
@@ -687,7 +694,7 @@ export const CustomPredictionForm = ({ mode = 'school', isReset = false }) => {
                 </span>
                 <span className="text-xs text-slate-500">/ 4.0</span>
               </div>
-              <p className="text-[11px] text-slate-500">US 4-point grade scale conversion</p>
+              <p className="text-[11px] text-slate-500">Projected grade point for this subject on a 4-point scale</p>
             </div>
 
             <div className="glass-panel p-4 rounded-2xl border border-white/5 space-y-1">

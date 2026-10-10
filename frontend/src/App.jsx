@@ -63,7 +63,7 @@ const DashboardContent = () => {
         ) : (
           /* Educator Gradebook Portal Tab */
           <div className="animate-fade-in">
-            <EducatorGradebook />
+            <EducatorGradebook key={resetKey} resetKey={resetKey} />
           </div>
         )}
 

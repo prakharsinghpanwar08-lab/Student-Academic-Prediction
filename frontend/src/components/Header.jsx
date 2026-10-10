@@ -98,7 +98,7 @@ export const Header = () => {
         </div>
 
         {/* Right: Persistent Dual-Profile Toggle Switch */}
-        <div className="flex items-center gap-4 w-full md:w-auto justify-end">
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full md:w-auto justify-end">
           
           {/* Realtime API status indicator */}
           <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs">
@@ -136,6 +136,10 @@ export const Header = () => {
               <span>College Mode</span>
             </button>
           </div>
+
+          <span className="max-w-56 text-right text-[10px] leading-tight text-amber-300/80">
+            ⚠️ Note: Switching tabs will erase current roster data.
+          </span>
 
         </div>
 
