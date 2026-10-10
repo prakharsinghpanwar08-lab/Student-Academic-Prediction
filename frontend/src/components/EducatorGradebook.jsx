@@ -64,6 +64,16 @@ export const EducatorGradebook = () => {
   return (
     <div className="space-y-6">
       
+      <aside
+        role="note"
+        aria-label="Subject teacher upload notice"
+        className="flex items-start gap-3 rounded-2xl border border-sky-400/30 bg-sky-500/10 p-4 text-sm leading-relaxed text-sky-100 shadow-lg"
+      >
+        <p>
+          📊 Subject Teacher Notice: Please ensure your uploaded Excel/CSV template contains the following columns for your specific subject: Student Name, Internal Marks, External Marks, Attendance %, Study Hours.
+        </p>
+      </aside>
+
       {/* Top Banner and Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         

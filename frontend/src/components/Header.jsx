@@ -57,7 +57,7 @@ export const Header = () => {
             }`}
           >
             <Compass className="w-4 h-4 text-purple-400" />
-            <span>Custom Predictor</span>
+            <span>Grade Predictor</span>
           </button>
           <button
             id="tab-simulator"

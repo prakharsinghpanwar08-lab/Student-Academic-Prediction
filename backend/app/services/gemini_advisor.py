@@ -103,16 +103,33 @@ def generate_heuristic_advice(
         estimated_gain_points=4.0
     ))
 
-    # Milestones
-    weekly_milestones = [
-        "Week 1: Try the short study blocks and note which topics feel hardest.",
-        "Week 2: Make a small set of question-and-answer flashcards and practise them from memory.",
-        "Week 3: Ask a teacher, tutor, or classmate to explain one topic that still feels unclear.",
-        f"Week 4: Review your practice and choose one habit to continue as you work toward your {target_score:.0f}% goal."
-    ]
+    if pred_score < 50:
+        milestone_tier = "Emergency passing roadmap"
+        weekly_milestones = [
+            "Week 1: Ask your teacher which topics and question types matter most to pass. List the basic ideas you need help understanding.",
+            "Week 2: Learn those basic ideas in short daily sessions. After each session, answer a few simple questions without looking at your notes.",
+            "Week 3: Practise past-year questions (PYQs) from the most important topics. Check every answer and redo questions you missed.",
+            "Week 4: Review key definitions and formulas, complete a timed set of passing-level questions, and ask for help with any remaining gaps."
+        ]
+    elif pred_score <= 80:
+        milestone_tier = "Steady growth roadmap"
+        weekly_milestones = [
+            "Week 1: Identify your three weakest topics and plan four focused study blocks around your weekly schedule.",
+            "Week 2: Work on one weak topic in each study block. Close your notes afterward and write down what you remember.",
+            "Week 3: Practise mixed questions from your weak topics and review mistakes to decide what needs another look.",
+            f"Week 4: Complete a timed practice set, adjust your study timetable using what you learned, and choose a next step toward your {target_score:.0f}% goal."
+        ]
+    else:
+        milestone_tier = "Elite mastery roadmap"
+        weekly_milestones = [
+            "Week 1: Choose the most challenging topics in each subject and schedule focused practice blocks around them.",
+            "Week 2: Solve complex, multi-step problems without worked examples, then explain your reasoning from memory.",
+            "Week 3: Use active recall across the full syllabus and complete a timed practice paper. Review every lost mark to find its cause.",
+            "Week 4: Rework the hardest questions, check for small errors, and complete a final timed paper aiming for full marks."
+        ]
 
     diagnosis = (
-        f"Your current information points to a projected score of {pred_score:.0f}% ({risk_status}). "
+        f"{milestone_tier}: your projected score is {pred_score:.0f}% ({risk_status}). "
         "Small, steady practice and asking for help when a topic is confusing can help you keep moving forward."
     )
 
@@ -147,6 +164,12 @@ Use plain language suitable for a student to read and act on immediately. Every 
 Do not use academic analytics, software, or engineering jargon. Never use the phrases "shift vectors" or "structured output models" in any student-facing text field.
 Analyze the anonymized student information below and return valid JSON matching the required response shape.
 
+4-WEEK PROGRESSIVE MILESTONE PLAN:
+- If the projected score is below 50%, create an emergency passing roadmap focused on passing topics, basic concepts, and past-year questions (PYQs).
+- If the projected score is from 50% through 80%, inclusive, create a steady growth roadmap focused on weak topics and time management.
+- If the projected score is above 80%, create an elite mastery roadmap focused on complex problem-solving, active recall, and achieving perfect scores.
+Choose exactly one tier from the projected score below. Write exactly four progressive weekly milestones for that tier. Do not use a static generic template or mix tiers.
+
 METRICS:
 - Profile: {data.get('profile_type')}
 - Projected Score: {pred_score}%
@@ -163,7 +186,7 @@ REQUIREMENTS:
 2. Name subjects in everyday language and explain one clear next step for each important challenge.
 3. Give practical actions with a time and frequency. Include a manageable time-blocking routine, active recall (close the notes and explain or write what the student remembers), and a plain-language flashcard method (one question per card, answer from memory, then repeat missed cards).
 4. Provide prioritized recommendations (Priority 1 = most important, 2 = next, 3 = helpful extra).
-5. Outline four simple weekly milestones. Each milestone must say what the student should do that week.
+5. Return a "4-Week Progressive Milestone Plan" of exactly four actionable weekly milestones matched to the projected-score tier above.
 6. Keep every student-facing text value free of technical terms. The JSON field names below are required for compatibility and are not student-facing prose.
 7. Keep "shift_vectors" as an empty array; explain study-time choices only in plain-language recommendation text.
 
@@ -190,6 +213,20 @@ RETURN STRICT JSON matching this schema:
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={settings.GEMINI_API_KEY}"
     payload = {
+        "systemInstruction": {
+            "parts": [{
+                "text": (
+                    "You are a warm, clear, student-friendly academic mentor. Write practical advice in plain language, "
+                    "without judgment or technical jargon. Create exactly four progressive weekly milestones based on "
+                    "the predicted score: below 50% means an emergency passing roadmap focused on passing topics, basic "
+                    "concepts, and past-year questions (PYQs); 50% through 80%, inclusive, means a steady growth roadmap "
+                    "focused on weak topics and time management; above 80% means an elite mastery roadmap focused on "
+                    "complex problem-solving, active recall, and achieving perfect scores. Keep the four weeks aligned "
+                    "to the selected tier, progressing from foundations to review. Do not mix tiers or return a generic "
+                    "plan. Never use technical or engineering jargon in student-facing text."
+                )
+            }]
+        },
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "responseMimeType": "application/json"
