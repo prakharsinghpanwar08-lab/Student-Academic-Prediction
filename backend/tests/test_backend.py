@@ -108,8 +108,8 @@ def test_ml_ensemble_predictions():
 
 
 def test_api_health():
-    """Verify /api/health endpoint."""
-    response = client.get("/api/health")
+    """Verify /api/v1/health endpoint."""
+    response = client.get("/api/v1/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
@@ -117,7 +117,7 @@ def test_api_health():
 
 
 def test_api_predict_school():
-    """Verify /api/predict endpoint in School mode."""
+    """Verify /api/v1/predict endpoint in School mode."""
     payload = {
         "profile_type": "school",
         "student_name": "Test Student",
@@ -131,7 +131,7 @@ def test_api_predict_school():
             {"subject_name": "Physics", "internal_score": 50.0, "external_score": 48.0}
         ]
     }
-    response = client.post("/api/predict", json=payload)
+    response = client.post("/api/v1/predict", json=payload)
     assert response.status_code == 200
     data = response.json()
 
@@ -143,7 +143,7 @@ def test_api_predict_school():
 
 
 def test_api_predict_college():
-    """Verify /api/predict endpoint in College mode with GPA."""
+    """Verify /api/v1/predict endpoint in College mode with GPA."""
     payload = {
         "profile_type": "college",
         "grade_or_semester": "Semester 4",
@@ -157,7 +157,7 @@ def test_api_predict_college():
             {"course_name": "OS", "credit_hours": 4.0, "grade": "A-", "internal_score": 82.0, "external_score": 80.0}
         ]
     }
-    response = client.post("/api/predict", json=payload)
+    response = client.post("/api/v1/predict", json=payload)
     assert response.status_code == 200
     data = response.json()
     assert data["risk_status"] == "On Track"
@@ -177,7 +177,7 @@ def test_api_advisor():
             {"subject_name": "Chemistry", "internal_score": 48.0, "external_score": 50.0}
         ]
     }
-    response = client.post("/api/advisor", json=payload)
+    response = client.post("/api/v1/advisor", json=payload)
     assert response.status_code == 200
     data = response.json()
 
@@ -190,8 +190,8 @@ def test_api_advisor():
 
 
 def test_api_roster():
-    """Verify /api/roster endpoint returns seeded student profiles."""
-    response = client.get("/api/roster?profile_type=all&risk_status=all")
+    """Verify /api/v1/roster endpoint returns seeded student profiles."""
+    response = client.get("/api/v1/roster?profile_type=all&risk_status=all")
     assert response.status_code == 200
     data = response.json()
 

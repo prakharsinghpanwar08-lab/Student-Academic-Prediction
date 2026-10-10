@@ -159,7 +159,7 @@ export const CustomPredictionForm = ({ mode = 'school', isReset = false }) => {
 
     try {
       // 1. Call /api/predict endpoint
-      const predictRes = await fetch(apiUrl('/api/predict'), {
+      const predictRes = await fetch(apiUrl('/predict'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -175,7 +175,7 @@ export const CustomPredictionForm = ({ mode = 'school', isReset = false }) => {
 
       // 2. Concurrently or immediately call /api/advisor for rich recommendations
       try {
-        const advisorRes = await fetch(apiUrl('/api/advisor'), {
+        const advisorRes = await fetch(apiUrl('/advisor'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

@@ -166,7 +166,7 @@ export const ProfileProvider = ({ children }) => {
       gpa_scale: parseFloat(gpaScale)
     };
 
-    fetch(apiUrl("/api/predict"), {
+    fetch(apiUrl("/predict"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -223,7 +223,7 @@ export const ProfileProvider = ({ children }) => {
         gpa_scale: parseFloat(gpaScale)
       };
 
-      const res = await fetch(apiUrl("/api/advisor"), {
+      const res = await fetch(apiUrl("/advisor"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
