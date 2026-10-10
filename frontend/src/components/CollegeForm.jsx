@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProfile } from '../context/ProfileContext';
-import { Plus, Trash2, GraduationCap, Award, Hash } from 'lucide-react';
+import { Plus, Trash2, GraduationCap, Award } from 'lucide-react';
 
 const GRADE_OPTIONS = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"];
 
@@ -13,31 +13,35 @@ export const CollegeForm = () => {
     gpaScale,
     setGpaScale,
     collegeCourses,
-    setCollegeCourses
+    setCollegeCourses,
+    maxInternalMarks,
+    setMaxInternalMarks
   } = useProfile();
 
   const handleCourseChange = (index, field, value) => {
-    const updated = [...collegeCourses];
-    if (field === 'credit_hours') {
-      updated[index][field] = Math.max(1, parseFloat(value) || 1);
-    } else if (field === 'internal_score' || field === 'external_score') {
-      updated[index][field] = Math.min(100, Math.max(0, parseFloat(value) || 0));
-    } else {
-      updated[index][field] = value;
-    }
-    setCollegeCourses(updated);
+    setCollegeCourses((courses) => courses.map((course, courseIndex) => {
+      if (courseIndex !== index) return course;
+      if (field === 'credit_hours') {
+        return { ...course, [field]: Math.max(1, parseFloat(value) || 1) };
+      }
+      if (field === 'internal_score' || field === 'external_score') {
+        const limit = field === 'internal_score' ? maxInternalMarks : 100 - maxInternalMarks;
+        return { ...course, [field]: value === '' ? null : Math.min(limit, Math.max(0, Number(value))) };
+      }
+      return { ...course, [field]: value };
+    }));
   };
 
   const handleCourseNameChange = (index, name) => {
-    const updated = [...collegeCourses];
-    updated[index].course_name = name;
-    setCollegeCourses(updated);
+    setCollegeCourses((courses) => courses.map((course, courseIndex) => (
+      courseIndex === index ? { ...course, course_name: name } : course
+    )));
   };
 
   const addCourse = () => {
     setCollegeCourses([
       ...collegeCourses,
-      { course_name: "Advanced Elective", credit_hours: 3.0, grade: "B", internal_score: 70, external_score: 70 }
+      { course_name: "Advanced Elective", credit_hours: 3.0, grade: "B", internal_score: null, external_score: null }
     ]);
   };
 
@@ -65,10 +69,11 @@ export const CollegeForm = () => {
             Semester:
           </label>
           <select
-            value={semester}
+            value={semester ?? ''}
             onChange={(e) => setSemester(e.target.value)}
             className="bg-slate-900 border border-slate-700 text-slate-200 text-xs font-semibold rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
           >
+            <option value="">Choose semester</option>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
               <option key={s} value={`Semester ${s}`}>Semester {s}</option>
             ))}
@@ -127,6 +132,26 @@ export const CollegeForm = () => {
 
       {/* Courses & Credits Table */}
       <div className="space-y-3">
+        <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label className="space-y-1.5">
+            <span className="block text-xs font-semibold text-slate-300">Maximum Internal Marks (out of 100)</span>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.5"
+              value={maxInternalMarks ?? ''}
+              onChange={(e) => setMaxInternalMarks(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+            />
+          </label>
+          <div className="space-y-1.5">
+            <span className="block text-xs font-semibold text-slate-300">Maximum External Marks</span>
+            <div className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-emerald-300 font-mono">
+              {maxInternalMarks === null ? '—' : `${100 - maxInternalMarks} points (100 − internal maximum)`}
+            </div>
+          </div>
+        </div>
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
             Enrolled Courses, Credits & Grades
@@ -190,8 +215,9 @@ export const CollegeForm = () => {
                       <input
                         type="number"
                         min="0"
-                        max="100"
-                        value={course.internal_score}
+                        max={maxInternalMarks ?? 0}
+                        value={course.internal_score ?? ''}
+                        disabled={maxInternalMarks === null}
                         onChange={(e) => handleCourseChange(index, 'internal_score', e.target.value)}
                         className="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-center font-mono text-slate-100 font-semibold focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                       />
@@ -200,8 +226,9 @@ export const CollegeForm = () => {
                       <input
                         type="number"
                         min="0"
-                        max="100"
-                        value={course.external_score}
+                        max={maxInternalMarks === null ? 0 : 100 - maxInternalMarks}
+                        value={course.external_score ?? ''}
+                        disabled={maxInternalMarks === null}
                         onChange={(e) => handleCourseChange(index, 'external_score', e.target.value)}
                         className="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-center font-mono text-slate-100 font-semibold focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                       />

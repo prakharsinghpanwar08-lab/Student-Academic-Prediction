@@ -52,10 +52,10 @@ An enterprise-grade, multi-agent academic analytics and advisory platform featur
 ## Key Modules
 
 ### 1. Dual-Profile Frontend (React + Tailwind CSS)
-- **Persistent Global Toggle**: Easily switch between `[ School Mode ]` and `[ College Mode ]`. State persists in `localStorage`.
+- **School / College Mode Toggle**: The selected mode persists in `localStorage`; switching modes clears the current dashboard inputs and predictions.
 - **Dynamic Adaptive Forms**:
-  - *School Mode*: Class Year (Grade 9-12), Subject-wise Internal & External Marks (0-100%), and Attendance %.
-  - *College Mode*: Current Semester (Sem 1-8), Course Credit Hours, Subject-wise Letter Grades, and cumulative GPA/CGPA.
+  - *School Mode*: Class Year (Grade 9-12), subject marks in points, and Attendance %. Set the internal maximum and the external maximum is calculated as the remainder of 100 points.
+  - *College Mode*: Current Semester (Sem 1-8), Course Credit Hours, subject marks in points, Letter Grades, and cumulative GPA/CGPA.
 - **Interactive "What-If" Scenario Simulator**:
   - Real-time sliders for Study Hours per Week, Daily Screen Time, Target Benchmark Marks, and Attendance.
   - Low-latency asynchronous debounced (120ms) predictive fetching to eliminate UI stutter.
@@ -68,6 +68,7 @@ An enterprise-grade, multi-agent academic analytics and advisory platform featur
 - **Educator Gradebook Portal**:
   - Prioritized "Academic Risk Roster" table mapping Student Name, Attendance %, Internal Marks Avg, External Marks Avg, Cumulative %, Risk Status, and AI Action Suggestions.
   - Interactive drill-down modal for student subject analysis.
+- **Global GPA Converter**: Convert GPA and percentage in either direction using a configurable institutional GPA ceiling.
 
 ### 2. Scalable Backend & ML Engine (Python FastAPI)
 - **FERPA & GDPR Anonymization**: Dedicated PII sanitizer strips student names, emails, identifiers, and IPs before passing cold numerical vectors to analytical layers.
@@ -76,9 +77,8 @@ An enterprise-grade, multi-agent academic analytics and advisory platform featur
   - `RandomForestRegressor` predicting projected continuous academic score.
   - `RandomForestClassifier` predicting calibrated failure probability and multi-class risk status.
 - **Gemini AI Advisor Engine**:
-  - Enforces Pydantic structured outputs (`overall_diagnosis`, `shift_vectors`, `recommendations`, `weekly_milestone_plan`).
-  - Pinpoints weak subjects and calculates study shift vectors: e.g. *"Shift 3.0 hours of weekly study from Physics (88%) to Chemistry (48%)"*.
-  - Built-in deterministic pedagogical engine ensures 100% offline availability.
+  - Returns student-friendly study advice with practical time-blocking, active recall, flashcard, and weekly planning strategies.
+  - Uses a deterministic coaching fallback when Gemini is unavailable.
 
 ### 3. Consolidated Database & Deployment Framework
 - **PostgreSQL Relational Schema**: Normalized tables for `users`, `profiles`, `attendance_logs`, and `internal_external_marks`.

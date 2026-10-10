@@ -3,20 +3,45 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 const ProfileContext = createContext(null);
 
 const DEFAULT_SCHOOL_SUBJECTS = [
-  { subject_name: "Mathematics", internal_score: 76, external_score: 72 },
-  { subject_name: "Physics", internal_score: 74, external_score: 70 },
-  { subject_name: "Chemistry", internal_score: 54, external_score: 50 },
-  { subject_name: "Computer Science", internal_score: 88, external_score: 86 },
-  { subject_name: "English", internal_score: 82, external_score: 80 },
+  { subject_name: "Mathematics", internal_score: 22.8, external_score: 50.4 },
+  { subject_name: "Physics", internal_score: 22.2, external_score: 49 },
+  { subject_name: "Chemistry", internal_score: 16.2, external_score: 35 },
+  { subject_name: "Computer Science", internal_score: 26.4, external_score: 60.2 },
+  { subject_name: "English", internal_score: 24.6, external_score: 56 },
 ];
 
 const DEFAULT_COLLEGE_COURSES = [
-  { course_name: "Data Structures & Algorithms", credit_hours: 4.0, grade: "B", internal_score: 72, external_score: 68 },
-  { course_name: "Computer Architecture", credit_hours: 4.0, grade: "B+", internal_score: 78, external_score: 75 },
-  { course_name: "Database Management Systems", credit_hours: 3.0, grade: "A-", internal_score: 85, external_score: 82 },
-  { course_name: "Operating Systems", credit_hours: 4.0, grade: "C+", internal_score: 62, external_score: 58 },
-  { course_name: "Discrete Mathematics", credit_hours: 3.0, grade: "B", internal_score: 70, external_score: 68 },
+  { course_name: "Data Structures & Algorithms", credit_hours: 4.0, grade: "B", internal_score: 21.6, external_score: 47.6 },
+  { course_name: "Computer Architecture", credit_hours: 4.0, grade: "B+", internal_score: 23.4, external_score: 52.5 },
+  { course_name: "Database Management Systems", credit_hours: 3.0, grade: "A-", internal_score: 25.5, external_score: 57.4 },
+  { course_name: "Operating Systems", credit_hours: 4.0, grade: "C+", internal_score: 18.6, external_score: 40.6 },
+  { course_name: "Discrete Mathematics", credit_hours: 3.0, grade: "B", internal_score: 21, external_score: 47.6 },
 ];
+
+const normalizeScores = (items, maxInternalMarks) => items.map((item) => ({
+  ...item,
+  internal_score: (item.internal_score / maxInternalMarks) * 100,
+  external_score: (item.external_score / (100 - maxInternalMarks)) * 100
+}));
+
+const hasCompletePredictionInputs = (
+  mode,
+  maxInternalMarks,
+  schoolSubjects,
+  collegeCourses,
+  attendance,
+  studyHours,
+  screenTime,
+  targetScore,
+  gradeOrSemester
+) => {
+  const marks = mode === "school" ? schoolSubjects : collegeCourses;
+  return maxInternalMarks !== null && maxInternalMarks > 0 && maxInternalMarks < 100
+    && marks.length > 0
+    && marks.every((item) => Number.isFinite(item.internal_score) && Number.isFinite(item.external_score))
+    && [attendance, studyHours, screenTime, targetScore].every(Number.isFinite)
+    && Boolean(gradeOrSemester);
+};
 
 export const ProfileProvider = ({ children }) => {
   // Persistent global toggle: 'school' | 'college'
@@ -29,6 +54,7 @@ export const ProfileProvider = ({ children }) => {
   // School Mode State
   const [classYear, setClassYear] = useState("Grade 10");
   const [schoolSubjects, setSchoolSubjects] = useState(DEFAULT_SCHOOL_SUBJECTS);
+  const [maxInternalMarks, setMaxInternalMarksState] = useState(30);
 
   // College Mode State
   const [semester, setSemester] = useState("Semester 4");
@@ -50,11 +76,65 @@ export const ProfileProvider = ({ children }) => {
 
   // AbortController ref for canceling in-flight debounced requests
   const abortControllerRef = useRef(null);
+  const advisorAbortControllerRef = useRef(null);
+  const [resetKey, setResetKey] = useState(0);
+
+  const resetProfile = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    advisorAbortControllerRef.current?.abort();
+    advisorAbortControllerRef.current = null;
+    setClassYear(null);
+    setSchoolSubjects([]);
+    setMaxInternalMarksState(null);
+    setSemester(null);
+    setCumulativeGpa(null);
+    setCollegeCourses([]);
+    setStudyHours(null);
+    setScreenTime(null);
+    setTargetScore(null);
+    setAttendance(null);
+    setPrediction(null);
+    setAdvisory(null);
+    setIsPredicting(false);
+    setIsLoadingAdvisor(false);
+    setResetKey((current) => current + 1);
+  };
 
   const setMode = (newMode) => {
+    resetProfile();
     setModeState(newMode);
     localStorage.setItem("academic_mode", newMode);
   };
+
+  const setMaxInternalMarks = (value) => {
+    const parsed = value === "" ? null : Number(value);
+    const nextMaximum = Number.isFinite(parsed) ? Math.min(100, Math.max(0, parsed)) : null;
+    const externalMaximum = nextMaximum === null ? null : 100 - nextMaximum;
+    setMaxInternalMarksState(nextMaximum);
+    setSchoolSubjects((subjects) => subjects.map((subject) => ({
+      ...subject,
+      internal_score: nextMaximum === null || subject.internal_score === null ? null : Math.min(subject.internal_score, nextMaximum),
+      external_score: externalMaximum === null || subject.external_score === null ? null : Math.min(subject.external_score, externalMaximum)
+    })));
+    setCollegeCourses((courses) => courses.map((course) => ({
+      ...course,
+      internal_score: nextMaximum === null || course.internal_score === null ? null : Math.min(course.internal_score, nextMaximum),
+      external_score: externalMaximum === null || course.external_score === null ? null : Math.min(course.external_score, externalMaximum)
+    })));
+  };
+
+  const canPredict = hasCompletePredictionInputs(
+    mode,
+    maxInternalMarks,
+    schoolSubjects,
+    collegeCourses,
+    attendance,
+    studyHours,
+    screenTime,
+    targetScore,
+    mode === "school" ? classYear : semester
+  );
 
   // Asynchronous debounced predictive fetch
   const triggerPredict = useCallback(() => {
@@ -63,6 +143,12 @@ export const ProfileProvider = ({ children }) => {
     }
     const controller = new AbortController();
     abortControllerRef.current = controller;
+
+    if (!canPredict) {
+      setPrediction(null);
+      setIsPredicting(false);
+      return;
+    }
 
     setIsPredicting(true);
 
@@ -73,9 +159,9 @@ export const ProfileProvider = ({ children }) => {
       study_hours_per_week: parseFloat(studyHours),
       screen_time_hours: parseFloat(screenTime),
       target_score: parseFloat(targetScore),
-      school_subjects: mode === "school" ? schoolSubjects : null,
-      college_courses: mode === "college" ? collegeCourses : null,
-      cumulative_gpa: mode === "college" ? parseFloat(cumulativeGpa) : null,
+      school_subjects: mode === "school" ? normalizeScores(schoolSubjects, maxInternalMarks) : null,
+      college_courses: mode === "college" ? normalizeScores(collegeCourses, maxInternalMarks) : null,
+      cumulative_gpa: mode === "college" && Number.isFinite(cumulativeGpa) ? parseFloat(cumulativeGpa) : null,
       gpa_scale: parseFloat(gpaScale)
     };
 
@@ -90,16 +176,18 @@ export const ProfileProvider = ({ children }) => {
         return res.json();
       })
       .then((data) => {
-        setPrediction(data);
-        setIsPredicting(false);
+        if (abortControllerRef.current === controller) {
+          setPrediction(data);
+          setIsPredicting(false);
+        }
       })
       .catch((err) => {
-        if (err.name !== "AbortError") {
+        if (err.name !== "AbortError" && abortControllerRef.current === controller) {
           console.error("Predict error:", err);
           setIsPredicting(false);
         }
       });
-  }, [mode, classYear, semester, attendance, studyHours, screenTime, targetScore, schoolSubjects, collegeCourses, cumulativeGpa, gpaScale]);
+  }, [mode, classYear, semester, attendance, studyHours, screenTime, targetScore, schoolSubjects, collegeCourses, cumulativeGpa, gpaScale, maxInternalMarks, canPredict]);
 
   // Debounce effect on slider or subject changes
   useEffect(() => {
@@ -112,6 +200,13 @@ export const ProfileProvider = ({ children }) => {
 
   // Deep AI Advisor generation
   const fetchAdvisory = async () => {
+    if (!canPredict) {
+      setAdvisory(null);
+      return;
+    }
+    advisorAbortControllerRef.current?.abort();
+    const controller = new AbortController();
+    advisorAbortControllerRef.current = controller;
     setIsLoadingAdvisor(true);
     try {
       const payload = {
@@ -121,24 +216,32 @@ export const ProfileProvider = ({ children }) => {
         study_hours_per_week: parseFloat(studyHours),
         screen_time_hours: parseFloat(screenTime),
         target_score: parseFloat(targetScore),
-        school_subjects: mode === "school" ? schoolSubjects : null,
-        college_courses: mode === "college" ? collegeCourses : null,
-        cumulative_gpa: mode === "college" ? parseFloat(cumulativeGpa) : null,
+        school_subjects: mode === "school" ? normalizeScores(schoolSubjects, maxInternalMarks) : null,
+        college_courses: mode === "college" ? normalizeScores(collegeCourses, maxInternalMarks) : null,
+        cumulative_gpa: mode === "college" && Number.isFinite(cumulativeGpa) ? parseFloat(cumulativeGpa) : null,
         gpa_scale: parseFloat(gpaScale)
       };
 
       const res = await fetch("/api/advisor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
       if (!res.ok) throw new Error("Advisor generation failed");
       const data = await res.json();
-      setAdvisory(data);
+      if (advisorAbortControllerRef.current === controller) {
+        setAdvisory(data);
+      }
     } catch (err) {
-      console.error("Advisory error:", err);
+      if (err.name !== "AbortError") {
+        console.error("Advisory error:", err);
+      }
     } finally {
-      setIsLoadingAdvisor(false);
+      if (advisorAbortControllerRef.current === controller) {
+        advisorAbortControllerRef.current = null;
+        setIsLoadingAdvisor(false);
+      }
     }
   };
 
@@ -153,6 +256,8 @@ export const ProfileProvider = ({ children }) => {
         setClassYear,
         schoolSubjects,
         setSchoolSubjects,
+        maxInternalMarks,
+        setMaxInternalMarks,
         semester,
         setSemester,
         cumulativeGpa,
@@ -174,7 +279,9 @@ export const ProfileProvider = ({ children }) => {
         isPredicting,
         isLoadingAdvisor,
         fetchAdvisory,
-        triggerPredict
+        triggerPredict,
+        canPredict,
+        resetKey
       }}
     >
       {children}

@@ -3,7 +3,7 @@ import { useProfile } from '../context/ProfileContext';
 import { Sparkles, ArrowRight, CheckCircle2, AlertCircle, Calendar, Zap, RefreshCw } from 'lucide-react';
 
 export const AdvisorPanel = () => {
-  const { advisory, fetchAdvisory, isLoadingAdvisor, prediction } = useProfile();
+  const { advisory, fetchAdvisory, isLoadingAdvisor, canPredict } = useProfile();
 
   return (
     <div className="glass-panel p-6 rounded-2xl border border-white/10 shadow-2xl space-y-6">
@@ -16,13 +16,13 @@ export const AdvisorPanel = () => {
           </div>
           <div>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <span>Gemini AI Academic Advisor & Shift Vectors</span>
+              <span>Gemini AI Study Coach</span>
               <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30">
-                Pydantic Structured Output
+                Practical study plan
               </span>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Targeted study hour reallocations, diagnostic gap analysis, and 4-week recovery roadmap.
+              Clear, practical steps to help you work toward your academic goals.
             </p>
           </div>
         </div>
@@ -30,11 +30,11 @@ export const AdvisorPanel = () => {
         <button
           id="btn-generate-advisor"
           onClick={fetchAdvisory}
-          disabled={isLoadingAdvisor}
+          disabled={isLoadingAdvisor || !canPredict}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 border border-indigo-400/30 transition-all duration-300 disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAdvisor ? 'animate-spin' : ''}`} />
-          <span>{isLoadingAdvisor ? 'Synthesizing Advice...' : 'Synthesize AI Advisory'}</span>
+          <span>{isLoadingAdvisor ? 'Preparing your plan...' : 'Get study plan'}</span>
         </button>
       </div>
 
@@ -43,7 +43,7 @@ export const AdvisorPanel = () => {
           <Sparkles className="w-8 h-8 text-indigo-400 mx-auto opacity-60" />
           <h3 className="text-sm font-semibold text-slate-300">No Advisory Generated Yet</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Click "Synthesize AI Advisory" above to run the intelligent Gemini Advisor engine across your current grades and simulation sliders.
+            Add your marks and study details to get clear next steps tailored to your current results.
           </p>
         </div>
       )}
@@ -52,7 +52,7 @@ export const AdvisorPanel = () => {
         <div className="py-12 text-center space-y-3">
           <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs font-medium text-slate-400">
-            Calculating subject elasticity and generating shift vectors via Gemini...
+            Turning your current results into clear, practical study steps...
           </p>
         </div>
       )}
@@ -63,7 +63,7 @@ export const AdvisorPanel = () => {
           {/* Overall Diagnosis Banner */}
           <div className="bg-gradient-to-r from-indigo-950/60 to-purple-950/60 p-4 rounded-xl border border-indigo-500/20 text-xs text-slate-300 leading-relaxed">
             <span className="font-bold text-indigo-300 block mb-1 text-xs uppercase tracking-wider">
-              Diagnostic Summary:
+              Your progress:
             </span>
             {advisory.overall_diagnosis}
           </div>
@@ -107,9 +107,9 @@ export const AdvisorPanel = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
                   <Zap className="w-4 h-4 text-amber-400" />
-                  <span>Calculated Study Shift Vectors</span>
+                  <span>Suggested study-time changes</span>
                 </span>
-                <span className="text-[11px] text-slate-400">Optimal hour reallocation</span>
+                <span className="text-[11px] text-slate-400">Put more time where it helps most</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -148,7 +148,7 @@ export const AdvisorPanel = () => {
           {/* Prioritized Recommendations */}
           <div className="space-y-3">
             <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Prioritized Pedagogical Recommendations
+              Your next steps
             </span>
 
             <div className="space-y-2.5">

@@ -3,14 +3,14 @@ import { useProfile } from '../context/ProfileContext';
 import { ShieldCheck, AlertTriangle, AlertOctagon, TrendingUp, Compass } from 'lucide-react';
 
 export const PerformanceDial = () => {
-  const { prediction, isPredicting, mode, gpaScale } = useProfile();
+  const { prediction, mode, gpaScale } = useProfile();
 
   // Fallback defaults while loading or initial render
-  const score = prediction ? prediction.predicted_score : 75.0;
-  const riskStatus = prediction ? prediction.risk_status : "On Track";
-  const failProb = prediction ? prediction.failure_probability : 0.05;
+  const score = prediction?.predicted_score ?? 0;
+  const riskStatus = prediction?.risk_status ?? "Awaiting inputs";
+  const failProb = prediction?.failure_probability ?? 0;
   const dialColor = prediction?.dial?.dial_color || "#10b981";
-  const gpa = prediction ? (gpaScale === 4.0 ? prediction.predicted_gpa_4 : prediction.predicted_gpa_10) : 7.5;
+  const gpa = prediction ? (gpaScale === 4.0 ? prediction.predicted_gpa_4 : prediction.predicted_gpa_10) : null;
 
   // Semicircle gauge angles: -90 degrees (0%) to +90 degrees (100%)
   // Clamped score [0, 100] -> angle [-90, +90]
@@ -136,14 +136,14 @@ export const PerformanceDial = () => {
               className="text-4xl font-extrabold font-mono tracking-tight transition-colors duration-300"
               style={{ color: dialColor }}
             >
-              {score.toFixed(1)}
+              {prediction ? score.toFixed(1) : '—'}
             </span>
             <span className="text-xl font-bold text-slate-400">%</span>
           </div>
           
           <div className="flex items-center justify-center gap-2 mt-1">
             <span className="text-xs font-semibold text-slate-400">
-              {mode === 'college' ? `Projected CGPA: ${gpa.toFixed(2)} / ${gpaScale.toFixed(1)}` : 'Continuous Performance'}
+              {mode === 'college' && prediction ? `Projected CGPA: ${gpa.toFixed(2)} / ${gpaScale.toFixed(1)}` : prediction ? 'Continuous Performance' : 'Enter metrics to see your prediction'}
             </span>
           </div>
         </div>
@@ -169,7 +169,7 @@ export const PerformanceDial = () => {
           <span className={`font-mono text-xs font-bold ${
             failProb > 0.5 ? 'text-red-400' : (failProb > 0.25 ? 'text-amber-400' : 'text-emerald-400')
           }`}>
-            {(failProb * 100).toFixed(1)}%
+            {prediction ? `${(failProb * 100).toFixed(1)}%` : '—'}
           </span>
         </div>
       </div>

@@ -10,8 +10,7 @@ import json
 import httpx
 from typing import Dict, Any, List
 from app.core.config import settings
-from app.db.schemas import AdvisorResponse, ShiftVector, ActionRecommendation
-from app.services.shift_vector import calculate_study_shift_vectors
+from app.db.schemas import AdvisorResponse, ActionRecommendation
 
 def generate_heuristic_advice(
     data: Dict[str, Any],
@@ -21,8 +20,7 @@ def generate_heuristic_advice(
     metadata: Dict[str, Any]
 ) -> AdvisorResponse:
     """
-    Deterministic pedagogical advisor generating structured recommendations
-    and study-shift vectors without requiring external API calls.
+    Deterministic academic coach providing practical recommendations offline.
     """
     profile_type = data.get("profile_type", "school")
     attendance = metadata.get("attendance", 75.0)
@@ -30,10 +28,6 @@ def generate_heuristic_advice(
     screen_time = metadata.get("screen_time", 4.0)
     target_score = metadata.get("target_score", 75.0)
     subjects = metadata.get("subjects", [])
-
-    # Calculate shift vectors
-    shift_vectors_raw = calculate_study_shift_vectors(subjects, study_hours, target_score)
-    shift_vectors = [ShiftVector(**sv) for sv in shift_vectors_raw]
 
     # Strengths and Vulnerabilities
     sorted_subjs = sorted(subjects, key=lambda s: s.get("combined_score", 0.0), reverse=True)
@@ -50,7 +44,7 @@ def generate_heuristic_advice(
 
     for s in reversed(sorted_subjs[-2:]):
         if s.get("combined_score", 0) < 65:
-            critical_vulnerabilities.append(f"Distress in {s.get('subject_name')} ({s.get('combined_score'):.0f}% vs target {target_score:.0f}%)")
+            critical_vulnerabilities.append(f"{s.get('subject_name')} is currently at {s.get('combined_score'):.0f}%, below your {target_score:.0f}% goal.")
     if attendance < 75:
         critical_vulnerabilities.append(f"Attendance deficit ({attendance:.0f}% is below the 75% institutional threshold)")
     if screen_time > 6.0:
@@ -64,16 +58,16 @@ def generate_heuristic_advice(
     # Recommendations
     recommendations: List[ActionRecommendation] = []
     
-    # Priority 1: Shift Vectors / Critical subject focus
-    if shift_vectors:
-        sv = shift_vectors[0]
+    # Focus the first recommendation on the subject with the most room to improve.
+    if sorted_subjs:
+        focus_subject = sorted_subjs[-1]
         recommendations.append(ActionRecommendation(
             priority=1,
-            category="Study Reallocation",
-            title=f"Rebalance Hours to {sv.to_subject}",
-            description=sv.rationale,
-            actionable_step=f"Dedicate {sv.hours_to_shift} hrs on Tuesdays/Thursdays specifically to {sv.to_subject} problem sets.",
-            estimated_gain_points=sv.projected_gain_points
+            category="Study habits",
+            title=f"Build confidence in {focus_subject.get('subject_name')}",
+            description=f"Your current mark shows that {focus_subject.get('subject_name')} could use a little extra practice.",
+            actionable_step=f"On three days this week, spend 25 minutes reviewing one {focus_subject.get('subject_name')} topic, then solve two practice questions without looking at your notes.",
+            estimated_gain_points=4.0
         ))
 
     # Priority 1/2: Attendance recovery if low
@@ -81,10 +75,10 @@ def generate_heuristic_advice(
         att_gain = round((78 - attendance) * 0.4, 1)
         recommendations.append(ActionRecommendation(
             priority=1,
-            category="Attendance Recovery",
-            title="Institutional Attendance Compliance",
-            description=f"Current attendance of {attendance:.0f}% impairs continuous assessment comprehension and increases exam eligibility risk.",
-            actionable_step="Maintain 100% attendance over the next 3 consecutive weeks to lift cumulative attendance past 75%.",
+            category="Attendance",
+            title="Make it easier to get to class",
+            description=f"Your current attendance is {attendance:.0f}%. Being in class gives you more chances to ask questions and practise new ideas.",
+            actionable_step="Choose your next five class days now. Pack what you need the night before and aim to attend each one.",
             estimated_gain_points=max(4.0, att_gain)
         ))
 
@@ -92,35 +86,34 @@ def generate_heuristic_advice(
     if screen_time > 5.0:
         recommendations.append(ActionRecommendation(
             priority=2,
-            category="Wellness & Screen Time",
-            title="Screen Time Habit Truncation",
-            description=f"Reducing recreational screen time by 1.5 hrs/day provides high-focus evening cognitive recovery.",
-            actionable_step="Implement 45-minute distraction-free Pomodoro study blocks using app limits after 8:00 PM.",
+            category="Study environment",
+            title="Make study time easier to protect",
+            description="A quieter study period can make it easier to focus and remember what you learn.",
+            actionable_step="For one 25-minute study block each evening, leave your phone in another room and take a five-minute break afterward.",
             estimated_gain_points=3.5
         ))
 
     # General Academic habit
     recommendations.append(ActionRecommendation(
         priority=3,
-        category="Exam Strategy",
-        title="Active Recall & Past-Paper Synthesis",
-        description="Transition from passive note reading to timed multi-question diagnostic reviews for upcoming internal exams.",
-        actionable_step="Solve 2 past exam papers under timed exam conditions each weekend.",
+        category="Remembering what you learn",
+        title="Practise remembering, not just rereading",
+        description="Try recalling an idea before checking your notes. Making a small set of question-and-answer cards can help you review it later.",
+        actionable_step="On four days this week, use two 25-minute study blocks. In the first, close your notes and write what you remember. In the second, make flashcards with one question per card, answer from memory, and repeat the cards you miss.",
         estimated_gain_points=4.0
     ))
 
     # Milestones
     weekly_milestones = [
-        f"Week 1: Initiate {shift_vectors[0].hours_to_shift if shift_vectors else 2.0} hr study reallocation and log daily attendance.",
-        "Week 2: Complete first subject-specific diagnostic mock quiz to benchmark deficit closure.",
-        "Week 3: Schedule 15-minute educator office-hour review on flagged topics.",
-        f"Week 4: Evaluate mid-cycle metrics to attain projected final performance of {pred_score:.0f}%."
+        "Week 1: Try the short study blocks and note which topics feel hardest.",
+        "Week 2: Make a small set of question-and-answer flashcards and practise them from memory.",
+        "Week 3: Ask a teacher, tutor, or classmate to explain one topic that still feels unclear.",
+        f"Week 4: Review your practice and choose one habit to continue as you work toward your {target_score:.0f}% goal."
     ]
 
     diagnosis = (
-        f"Student demonstrates a projected trajectory of {pred_score:.0f}% ({risk_status}). "
-        f"Key intervention requires targeted reallocation into {shift_vectors[0].to_subject if shift_vectors else 'core subjects'} "
-        f"and rigorous adherence to classroom contact hours."
+        f"Your current information points to a projected score of {pred_score:.0f}% ({risk_status}). "
+        "Small, steady practice and asking for help when a topic is confusing can help you keep moving forward."
     )
 
     return AdvisorResponse(
@@ -128,7 +121,7 @@ def generate_heuristic_advice(
         risk_level=risk_status, # type: ignore
         key_strengths=key_strengths,
         critical_vulnerabilities=critical_vulnerabilities,
-        shift_vectors=shift_vectors,
+        shift_vectors=[],
         recommendations=recommendations,
         weekly_milestone_plan=weekly_milestones
     )
@@ -149,8 +142,10 @@ async def get_ai_advisory(
         return generate_heuristic_advice(data, pred_score, risk_status, failure_probability, metadata)
 
     prompt = f"""
-You are an expert Chief Academic Advisor in a high-performance university and school analytics office.
-Analyze the following anonymized student performance metrics and generate a strictly structured JSON response.
+You are a warm, clear, student-friendly academic mentor. Help the student understand what to do next without judgment.
+Use plain language suitable for a student to read and act on immediately. Every sentence shown to the student must be simple, specific, encouraging, and practical.
+Do not use academic analytics, software, or engineering jargon. Never use the phrases "shift vectors" or "structured output models" in any student-facing text field.
+Analyze the anonymized student information below and return valid JSON matching the required response shape.
 
 METRICS:
 - Profile: {data.get('profile_type')}
@@ -164,10 +159,13 @@ METRICS:
 - Subject Breakdown: {json.dumps(metadata.get('subjects', []))}
 
 REQUIREMENTS:
-1. Enforce rigorous pedagogical reasoning.
-2. Pinpoint lagging subjects and calculate precise study shift vectors (transferring hours from high-scoring subjects to low-scoring subjects).
-3. Provide prioritized recommendations (Priority 1 = Urgent, 2 = High, 3 = Medium).
-4. Outline a 4-week structured milestone recovery plan.
+1. Be kind, direct, and realistic. Do not shame the student or promise a specific score increase.
+2. Name subjects in everyday language and explain one clear next step for each important challenge.
+3. Give practical actions with a time and frequency. Include a manageable time-blocking routine, active recall (close the notes and explain or write what the student remembers), and a plain-language flashcard method (one question per card, answer from memory, then repeat missed cards).
+4. Provide prioritized recommendations (Priority 1 = most important, 2 = next, 3 = helpful extra).
+5. Outline four simple weekly milestones. Each milestone must say what the student should do that week.
+6. Keep every student-facing text value free of technical terms. The JSON field names below are required for compatibility and are not student-facing prose.
+7. Keep "shift_vectors" as an empty array; explain study-time choices only in plain-language recommendation text.
 
 RETURN STRICT JSON matching this schema:
 {{
@@ -175,15 +173,7 @@ RETURN STRICT JSON matching this schema:
   "risk_level": "On Track" | "Critical" | "At Risk",
   "key_strengths": ["string"],
   "critical_vulnerabilities": ["string"],
-  "shift_vectors": [
-    {{
-      "from_subject": "string",
-      "to_subject": "string",
-      "hours_to_shift": float,
-      "rationale": "string",
-      "projected_gain_points": float
-    }}
-  ],
+  "shift_vectors": [],
   "recommendations": [
     {{
       "priority": 1 | 2 | 3,

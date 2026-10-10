@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProfile } from '../context/ProfileContext';
-import { GraduationCap, School, BookOpen, Users, Sparkles, Activity, Compass } from 'lucide-react';
+import { GraduationCap, School, Users, Activity, Compass, Calculator } from 'lucide-react';
 
 export const Header = () => {
   const { mode, setMode, activeTab, setActiveTab, isPredicting } = useProfile();
@@ -46,7 +46,7 @@ export const Header = () => {
         </div>
 
         {/* Center: Navigation Tabs */}
-        <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-sm font-medium">
+        <div className="flex flex-wrap items-center justify-center bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-sm font-medium">
           <button
             id="tab-custom-predictor"
             onClick={() => setActiveTab('custom')}
@@ -82,6 +82,18 @@ export const Header = () => {
           >
             <Users className="w-4 h-4 text-emerald-400" />
             <span>Educator Gradebook</span>
+          </button>
+          <button
+            id="tab-gpa-converter"
+            onClick={() => setActiveTab('converter')}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer ${
+              activeTab === 'converter'
+                ? 'bg-gradient-to-r from-slate-800 to-slate-700/80 text-white shadow-sm border border-slate-700/60'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Calculator className="w-4 h-4 text-cyan-400" />
+            <span>GPA Converter</span>
           </button>
         </div>
 

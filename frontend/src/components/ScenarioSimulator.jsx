@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProfile } from '../context/ProfileContext';
-import { Sliders, Clock, Smartphone, Target, UserCheck, Zap, Sparkles } from 'lucide-react';
+import { Sliders, Clock, Smartphone, Target, UserCheck } from 'lucide-react';
 
 export const ScenarioSimulator = () => {
   const {
@@ -11,8 +11,7 @@ export const ScenarioSimulator = () => {
     targetScore,
     setTargetScore,
     attendance,
-    setAttendance,
-    isPredicting
+    setAttendance
   } = useProfile();
 
   // Quick preset scenario templates
@@ -75,7 +74,7 @@ export const ScenarioSimulator = () => {
               <span className="text-xs font-bold text-slate-200">Study Hours / Week</span>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="font-mono text-base font-bold text-indigo-400">{studyHours.toFixed(1)}</span>
+              <span className="font-mono text-base font-bold text-indigo-400">{studyHours === null ? '—' : studyHours.toFixed(1)}</span>
               <span className="text-slate-400 text-xs font-medium">hrs</span>
             </div>
           </div>
@@ -86,7 +85,7 @@ export const ScenarioSimulator = () => {
             min="1"
             max="48"
             step="0.5"
-            value={studyHours}
+            value={studyHours ?? ''}
             onChange={(e) => setStudyHours(parseFloat(e.target.value))}
             className="w-full accent-indigo-500"
           />
@@ -109,7 +108,7 @@ export const ScenarioSimulator = () => {
             </div>
             <div className="flex items-baseline gap-1">
               <span className={`font-mono text-base font-bold ${screenTime > 6 ? 'text-red-400' : 'text-purple-400'}`}>
-                {screenTime.toFixed(1)}
+                {screenTime === null ? '—' : screenTime.toFixed(1)}
               </span>
               <span className="text-slate-400 text-xs font-medium">hrs/day</span>
             </div>
@@ -121,7 +120,7 @@ export const ScenarioSimulator = () => {
             min="0.5"
             max="14"
             step="0.5"
-            value={screenTime}
+            value={screenTime ?? ''}
             onChange={(e) => setScreenTime(parseFloat(e.target.value))}
             className="w-full accent-purple-500"
           />
@@ -143,7 +142,7 @@ export const ScenarioSimulator = () => {
               <span className="text-xs font-bold text-slate-200">Target Benchmark Marks</span>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="font-mono text-base font-bold text-emerald-400">{targetScore.toFixed(0)}</span>
+              <span className="font-mono text-base font-bold text-emerald-400">{targetScore === null ? '—' : targetScore.toFixed(0)}</span>
               <span className="text-slate-400 text-xs font-medium">%</span>
             </div>
           </div>
@@ -154,7 +153,7 @@ export const ScenarioSimulator = () => {
             min="40"
             max="98"
             step="1"
-            value={targetScore}
+            value={targetScore ?? ''}
             onChange={(e) => setTargetScore(parseFloat(e.target.value))}
             className="w-full accent-emerald-500"
           />
@@ -177,7 +176,7 @@ export const ScenarioSimulator = () => {
             </div>
             <div className="flex items-baseline gap-1">
               <span className={`font-mono text-base font-bold ${attendance < 75 ? 'text-red-400' : 'text-amber-400'}`}>
-                {attendance.toFixed(0)}
+                {attendance === null ? '—' : attendance.toFixed(0)}
               </span>
               <span className="text-slate-400 text-xs font-medium">%</span>
             </div>
@@ -189,7 +188,7 @@ export const ScenarioSimulator = () => {
             min="30"
             max="100"
             step="1"
-            value={attendance}
+            value={attendance ?? ''}
             onChange={(e) => setAttendance(parseFloat(e.target.value))}
             className="w-full accent-amber-500"
           />

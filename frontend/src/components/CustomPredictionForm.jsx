@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
-  UserCheck, 
   Send, 
   AlertTriangle, 
   CheckCircle2, 
@@ -13,7 +12,6 @@ import {
   Compass, 
   ArrowRightLeft, 
   CheckCircle,
-  HelpCircle,
   RotateCcw,
   Zap,
   Target,
@@ -27,17 +25,18 @@ const SUPPORT_LEVELS = [
   { id: 'intensive', label: 'Intensive Remediation Plan', bonusHours: 7, description: 'Daily structured intervention & mentorship (+7h)' },
 ];
 
-export const CustomPredictionForm = () => {
+export const CustomPredictionForm = ({ mode = 'school', isReset = false }) => {
   // Form State
-  const [studentName, setStudentName] = useState('Custom Student');
-  const [profileType, setProfileType] = useState('school'); // 'school' | 'college'
-  const [gradeOrSemester, setGradeOrSemester] = useState('Grade 10');
-  const [internalScore, setInternalScore] = useState(72.0);
-  const [externalScore, setExternalScore] = useState(68.0);
-  const [attendance, setAttendance] = useState(78.0);
-  const [studyHours, setStudyHours] = useState(14.0);
-  const [screenTime, setScreenTime] = useState(4.0);
-  const [targetScore, setTargetScore] = useState(75.0);
+  const [studentName, setStudentName] = useState('');
+  const [profileType, setProfileType] = useState(mode); // 'school' | 'college'
+  const [gradeOrSemester, setGradeOrSemester] = useState(isReset ? '' : mode === 'school' ? 'Grade 10' : 'Semester 1');
+  const [maxInternalMarks, setMaxInternalMarks] = useState(isReset ? null : 30);
+  const [internalScore, setInternalScore] = useState(isReset ? null : 21.6);
+  const [externalScore, setExternalScore] = useState(isReset ? null : 47.6);
+  const [attendance, setAttendance] = useState(isReset ? null : 78.0);
+  const [studyHours, setStudyHours] = useState(isReset ? null : 14.0);
+  const [screenTime, setScreenTime] = useState(isReset ? null : 4.0);
+  const [targetScore, setTargetScore] = useState(isReset ? null : 75.0);
   const [supportLevel, setSupportLevel] = useState('none');
 
   // Loading & Result States
@@ -45,16 +44,22 @@ export const CustomPredictionForm = () => {
   const [errorMsg, setErrorMsg] = useState(null);
   const [predictionResult, setPredictionResult] = useState(null);
   const [advisoryResult, setAdvisoryResult] = useState(null);
+  const requestControllerRef = useRef(null);
+
+  useEffect(() => {
+    return () => requestControllerRef.current?.abort();
+  }, []);
 
   // Quick Preset Scenarios
   const applyPreset = (presetType) => {
     setErrorMsg(null);
+    setMaxInternalMarks(30);
     if (presetType === 'at_risk') {
       setStudentName('Alex Mercer (At-Risk)');
       setProfileType('school');
       setGradeOrSemester('Grade 10');
-      setInternalScore(48.0);
-      setExternalScore(42.0);
+      setInternalScore(14.4);
+      setExternalScore(29.4);
       setAttendance(52.0);
       setStudyHours(6.0);
       setScreenTime(8.0);
@@ -64,8 +69,8 @@ export const CustomPredictionForm = () => {
       setStudentName('Jordan Lee (Critical)');
       setProfileType('school');
       setGradeOrSemester('Grade 11');
-      setInternalScore(66.0);
-      setExternalScore(62.0);
+      setInternalScore(19.8);
+      setExternalScore(43.4);
       setAttendance(71.0);
       setStudyHours(12.0);
       setScreenTime(5.0);
@@ -75,8 +80,8 @@ export const CustomPredictionForm = () => {
       setStudentName('Samantha Reed (On Track)');
       setProfileType('school');
       setGradeOrSemester('Grade 12');
-      setInternalScore(88.0);
-      setExternalScore(85.0);
+      setInternalScore(26.4);
+      setExternalScore(59.5);
       setAttendance(94.0);
       setStudyHours(22.0);
       setScreenTime(2.5);
@@ -86,23 +91,43 @@ export const CustomPredictionForm = () => {
   };
 
   const handleReset = () => {
-    setStudentName('Custom Student');
-    setProfileType('school');
-    setGradeOrSemester('Grade 10');
-    setInternalScore(72.0);
-    setExternalScore(68.0);
-    setAttendance(78.0);
-    setStudyHours(14.0);
-    setScreenTime(4.0);
-    setTargetScore(75.0);
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = null;
+    setStudentName('');
+    setProfileType(mode);
+    setGradeOrSemester('');
+    setMaxInternalMarks(null);
+    setInternalScore(null);
+    setExternalScore(null);
+    setAttendance(null);
+    setStudyHours(null);
+    setScreenTime(null);
+    setTargetScore(null);
     setSupportLevel('none');
+    setIsSubmitting(false);
     setPredictionResult(null);
     setAdvisoryResult(null);
     setErrorMsg(null);
   };
 
+  const handleMaxInternalMarksChange = (value) => {
+    const maximum = value === '' ? null : Math.min(100, Math.max(0, Number(value)));
+    setMaxInternalMarks(maximum);
+    setInternalScore((score) => maximum === null || score === null ? null : Math.min(maximum, score));
+    setExternalScore((score) => maximum === null || score === null ? null : Math.min(100 - maximum, score));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const requiredValues = [internalScore, externalScore, maxInternalMarks, attendance, studyHours, screenTime, targetScore];
+    if (requiredValues.some((value) => value === null || value === '' || !Number.isFinite(Number(value)))
+      || maxInternalMarks <= 0 || maxInternalMarks >= 100 || !gradeOrSemester) {
+      setErrorMsg('Enter all required values, choose a grade or semester, and set an internal maximum between 0 and 100.');
+      return;
+    }
+    requestControllerRef.current?.abort();
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
     setIsSubmitting(true);
     setErrorMsg(null);
 
@@ -120,14 +145,14 @@ export const CustomPredictionForm = () => {
       screen_time_hours: Math.min(24, Math.max(0, parseFloat(screenTime) || 0)),
       target_score: Math.min(100, Math.max(0, parseFloat(targetScore) || 0)),
       school_subjects: profileType === 'school' ? [
-        { subject_name: 'Core Internal Assessment', internal_score: parseFloat(internalScore), external_score: parseFloat(externalScore) },
-        { subject_name: 'Core External Assessment', internal_score: parseFloat(internalScore), external_score: parseFloat(externalScore) }
+        { subject_name: 'Core Internal Assessment', internal_score: (Number(internalScore) / maxInternalMarks) * 100, external_score: (Number(externalScore) / (100 - maxInternalMarks)) * 100 },
+        { subject_name: 'Core External Assessment', internal_score: (Number(internalScore) / maxInternalMarks) * 100, external_score: (Number(externalScore) / (100 - maxInternalMarks)) * 100 }
       ] : null,
       college_courses: profileType === 'college' ? [
-        { course_name: 'Core Major Course', credit_hours: 4.0, internal_score: parseFloat(internalScore), external_score: parseFloat(externalScore) },
-        { course_name: 'Allied Course', credit_hours: 3.0, internal_score: parseFloat(internalScore), external_score: parseFloat(externalScore) }
+        { course_name: 'Core Major Course', credit_hours: 4.0, internal_score: (Number(internalScore) / maxInternalMarks) * 100, external_score: (Number(externalScore) / (100 - maxInternalMarks)) * 100 },
+        { course_name: 'Allied Course', credit_hours: 3.0, internal_score: (Number(internalScore) / maxInternalMarks) * 100, external_score: (Number(externalScore) / (100 - maxInternalMarks)) * 100 }
       ] : null,
-      cumulative_gpa: profileType === 'college' ? (parseFloat(internalScore) + parseFloat(externalScore)) / 20.0 : null,
+      cumulative_gpa: profileType === 'college' ? ((Number(internalScore) / maxInternalMarks) + (Number(externalScore) / (100 - maxInternalMarks))) * 5 : null,
       gpa_scale: 10.0
     };
 
@@ -136,7 +161,8 @@ export const CustomPredictionForm = () => {
       const predictRes = await fetch('/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
 
       if (!predictRes.ok) {
@@ -151,21 +177,29 @@ export const CustomPredictionForm = () => {
         const advisorRes = await fetch('/api/advisor', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          signal: controller.signal
         });
         if (advisorRes.ok) {
           const advData = await advisorRes.json();
           setAdvisoryResult(advData);
         }
       } catch (advErr) {
-        console.warn('AI Advisor call notice:', advErr);
+        if (advErr.name !== 'AbortError') {
+          console.warn('AI Advisor call notice:', advErr);
+        }
       }
 
     } catch (err) {
-      console.error('Custom prediction error:', err);
-      setErrorMsg(err.message || 'Failed to generate performance prediction. Please ensure the backend is running.');
+      if (err.name !== 'AbortError') {
+        console.error('Custom prediction error:', err);
+        setErrorMsg(err.message || 'Failed to generate performance prediction. Please ensure the backend is running.');
+      }
     } finally {
-      setIsSubmitting(false);
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null;
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -282,8 +316,10 @@ export const CustomPredictionForm = () => {
                 <select
                   value={gradeOrSemester}
                   onChange={(e) => setGradeOrSemester(e.target.value)}
+                  required
                   className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition-all"
                 >
+                  <option value="">Choose grade</option>
                   <option value="Grade 9">Grade 9 (Secondary)</option>
                   <option value="Grade 10">Grade 10 (Secondary Board)</option>
                   <option value="Grade 11">Grade 11 (Senior Secondary)</option>
@@ -293,8 +329,10 @@ export const CustomPredictionForm = () => {
                 <select
                   value={gradeOrSemester}
                   onChange={(e) => setGradeOrSemester(e.target.value)}
+                  required
                   className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition-all"
                 >
+                  <option value="">Choose semester</option>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
                     <option key={sem} value={`Semester ${sem}`}>Semester {sem}</option>
                   ))}
@@ -305,6 +343,26 @@ export const CustomPredictionForm = () => {
           </div>
 
           {/* Row 2: Performance & Academic Metrics Grid */}
+          <div className="mb-4 bg-slate-900/70 p-4 rounded-2xl border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label className="space-y-1.5">
+              <span className="block text-xs font-semibold text-slate-300">Maximum Internal Marks (out of 100)</span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                value={maxInternalMarks ?? ''}
+                onChange={(e) => handleMaxInternalMarksChange(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+            </label>
+            <div className="space-y-1.5">
+              <span className="block text-xs font-semibold text-slate-300">Maximum External Marks</span>
+              <div className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-purple-300 font-mono">
+                {maxInternalMarks === null ? '—' : `${100 - maxInternalMarks} points (100 − internal maximum)`}
+              </div>
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             {/* Internal Marks */}
@@ -314,15 +372,17 @@ export const CustomPredictionForm = () => {
                   <BookOpen className="w-4 h-4" />
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Internal Marks</span>
                 </div>
-                <span className="font-mono text-base font-extrabold text-indigo-400">{internalScore}%</span>
+                <span className="font-mono text-base font-extrabold text-indigo-400">{internalScore ?? '—'} / {maxInternalMarks ?? '—'}</span>
               </div>
               <input
                 type="number"
                 min="0"
-                max="100"
+                max={maxInternalMarks ?? 0}
                 step="0.5"
-                value={internalScore}
-                onChange={(e) => setInternalScore(parseFloat(e.target.value) || 0)}
+                required
+                disabled={maxInternalMarks === null}
+                value={internalScore ?? ''}
+                onChange={(e) => setInternalScore(e.target.value === '' ? null : Math.min(maxInternalMarks, Math.max(0, Number(e.target.value))))}
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
               <span className="text-[10px] text-slate-500 block">Formative tests, quizzes & assignments</span>
@@ -335,15 +395,17 @@ export const CustomPredictionForm = () => {
                   <GraduationCap className="w-4 h-4" />
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-300">External Marks</span>
                 </div>
-                <span className="font-mono text-base font-extrabold text-purple-400">{externalScore}%</span>
+                <span className="font-mono text-base font-extrabold text-purple-400">{externalScore ?? '—'} / {maxInternalMarks === null ? '—' : 100 - maxInternalMarks}</span>
               </div>
               <input
                 type="number"
                 min="0"
-                max="100"
+                max={maxInternalMarks === null ? 0 : 100 - maxInternalMarks}
                 step="0.5"
-                value={externalScore}
-                onChange={(e) => setExternalScore(parseFloat(e.target.value) || 0)}
+                required
+                disabled={maxInternalMarks === null}
+                value={externalScore ?? ''}
+                onChange={(e) => setExternalScore(e.target.value === '' ? null : Math.min(100 - maxInternalMarks, Math.max(0, Number(e.target.value))))}
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono font-bold focus:ring-2 focus:ring-purple-500 focus:outline-none"
               />
               <span className="text-[10px] text-slate-500 block">Summative term-end & board examination</span>

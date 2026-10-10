@@ -8,10 +8,11 @@ import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { PerformanceDial } from './components/PerformanceDial';
 import { AdvisorPanel } from './components/AdvisorPanel';
 import { EducatorGradebook } from './components/EducatorGradebook';
-import { ShieldCheck, Cpu, Database, Award } from 'lucide-react';
+import { GlobalGpaConverter } from './components/GlobalGpaConverter';
+import { ShieldCheck, Cpu, Database } from 'lucide-react';
 
 const DashboardContent = () => {
-  const { mode, activeTab } = useProfile();
+  const { mode, activeTab, resetKey } = useProfile();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -22,7 +23,11 @@ const DashboardContent = () => {
         {activeTab === 'custom' ? (
           /* Interactive Custom Academic Predictor */
           <div className="animate-fade-in">
-            <CustomPredictionForm />
+            <CustomPredictionForm key={resetKey} mode={mode} isReset={resetKey > 0} />
+          </div>
+        ) : activeTab === 'converter' ? (
+          <div className="animate-fade-in">
+            <GlobalGpaConverter key={resetKey} />
           </div>
         ) : activeTab === 'simulator' ? (
           <div className="space-y-8 animate-fade-in">
